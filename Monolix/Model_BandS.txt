@@ -1,0 +1,98 @@
+
+
+[LONGITUDINAL]
+;input = {del_bt}
+input = {d_t,lam2,lam3}
+PK:
+depot(target= L)
+;depot(target= LC, Tlag = 5)
+
+EQUATION:
+odeType = stiff
+; parameter values
+L_0 = 0
+LC_0 = 0
+V_0 = 0
+Th_0=0
+B_0 = 0
+GB_0 = 0
+LP_0 = 0
+SP_0 = 0
+M_0 =0
+A_0 = 0
+I_0=0
+
+; lipid nanoparticles
+  del_lv = 0.15;
+  d_l =0.1;
+
+; vaccinated cells
+  d_v = 0.89;
+
+; T follicular helper cells
+  del_tv = 0.73; 
+  ;d_t = 0.57;
+
+; activated b cells
+  del_bt = 0.36;
+  rho_g = 0.69;
+  rho_s = 0.6;
+  d_b = 0.02;
+
+; germinal center B cells
+  del_ig = 0.72; 
+  beta_g = 2.77;
+  p_g = 0.1;
+  d_g = 0.49;
+  
+;long-lived plasma cells
+  p_p = 0.27;
+  d_p =  0.0112;
+  p_p2 = 0.9;
+
+; short-lived plasma cells
+  d_s = 0.29; 
+
+; memory B cells
+  d_m = 0.0029;
+  p_m = 0.85; 
+  beta_m = 0.009;
+
+; antibody
+  alpha_p = 18; %antibody production rate by LLPCs
+  alpha_s = 272;%antibody production rate by SLPCs
+  d_a =  0.033; 
+
+; interleukin
+  rho_i =2.07;
+  d_i = 3.47;
+  SI = 0.03;
+
+
+if t< 60
+	par1 = 0
+	par2 = 0
+elseif t<270
+	par1 = 1
+	par2 = 0
+else
+	par1 = 1
+	par2 = 1
+end
+
+ddt_L = -del_lv *L- d_l *L;
+ddt_V = del_lv *L-d_v*V ;
+ddt_Th = del_tv*V-d_t*Th
+ddt_B = (1+par1*lam2+par2*lam3)*del_bt*Th - d_b*B-rho_s*B-rho_g*B;
+;ddt_B = del_bt*Th - d_b*B-rho_s*B-rho_g*B;
+ddt_GB = rho_g*B+beta_g*(2*p_g-1)*del_ig*I/(SI+I)*GB+par1*beta_m*(1-p_m)*(1-p_p2)*M-d_g*GB;
+ddt_LP = (1-p_g)*p_p*beta_g*GB+par1*beta_m*(1-p_m)*p_p2*M-d_p*LP;
+ddt_SP = rho_s*B-d_s*SP;
+ddt_M = (1-p_g)*(1-p_p)*beta_g*GB+par1*beta_m*(2*p_m-1)*V*M- d_m*M;
+ddt_A = (1+par1*lam2+par2*lam3)*alpha_s*SP+alpha_p*LP-d_a*A;
+;ddt_A = alpha_s*SP+alpha_p*LP-d_a*A;
+ddt_I = rho_i*Th - d_i*I;
+
+AA = 1000*A
+OUTPUT:
+output = {A}
